@@ -52,8 +52,7 @@ void Data::update() {
         throw std::runtime_error("Unable to write data file");
     
     auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    auto tm = *std::gmtime(&t);
-    date = fmt::format("{:%Y-%m-%dT%H:%M:%SZ}\n", tm);
+    date = fmt::format("{:%Y-%m-%dT%H:%M:%SZ}\n", *std::gmtime(&t));
     std::cout << date << '\n';
 
     std::string dataStr;
