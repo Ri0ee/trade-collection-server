@@ -9,10 +9,20 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/yhirose/cpp-httplib
 )
 
-find_package(OpenSSL REQUIRED)
+FetchContent_Declare(
+    jsoncons
+    GIT_REPOSITORY https://github.com/danielaparker/jsoncons
+    GIT_TAG v0.170.0
+)
 
-set(HTTPLIB_IS_USING_OPENSSL TRUE)
-FetchContent_MakeAvailable(cpp-httplib)
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt
+)
 
-add_executable(server src/server.cpp)
-target_link_libraries(server OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
+FetchContent_MakeAvailable(cpp-httplib jsoncons fmt)
+
+add_executable(server src/server.cpp src/data.cpp)
+add_executable(scrapper src/scrapper.cpp src/data.cpp src/aggregator.cpp)
+target_link_libraries(server PRIVATE httplib::httplib jsoncons fmt)
+target_link_libraries(scrapper PRIVATE httplib::httplib jsoncons fmt)
