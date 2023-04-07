@@ -26,7 +26,7 @@ int main() {
 
     aggr::updateCurrencyRatio("divine", 100);
     Data data;
-    if (auto searchResponse = client.search(searchRequest); searchResponse.has_value()) {
+    if (auto searchResponse = client.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
         auto hashes = searchResponse.value();
         if (auto fetchResponse = client.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
             auto items = fetchResponse.value();
