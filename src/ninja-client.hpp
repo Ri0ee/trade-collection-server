@@ -17,4 +17,13 @@ using namespace std::chrono;
 
 struct NinjaClient : httplib::SSLClient {
     NinjaClient(const std::string& host) : httplib::SSLClient(host) {}
+
+    std::optional<ninjapi::CurrencyOverviewResponse> fetchCurrencyOverview(const std::string& league, const std::string& language = "english") {
+        std::string url = fmt::format(ninjapi::ep::currencyOverview, league, "Currency", language);
+        if (auto res = Get(url).value(); res.status == 200) {
+            return jsoncons::decode_json<ninjapi::CurrencyOverviewResponse>(res.body);
+        }
+
+        return std::nullopt;
+    }
 };

@@ -16,7 +16,9 @@ int main() {
 
     std::string poeToken;
     tokenFile >> poeToken;
-    PoEClient client("www.pathofexile.com", poeToken);
+
+    PoEClient poeClient("www.pathofexile.com", poeToken);
+    NinjaClient ninjaClient("poe.ninja");
 
     poeapi::SearchRequest searchRequest {};
     searchRequest.query.type = "Awakened Added Chaos Damage Support";
@@ -24,11 +26,23 @@ int main() {
     searchRequest.query.stats.push_back({ .type = "and", .filters = {}});
     searchRequest.sort.price = "asc";
 
-    aggr::updateCurrencyRatio("divine", 100);
+    double divineOrbChaosEquivalent = 100; // default
+    if (auto currencyOverviewResponse = ninjaClient.fetchCurrencyOverview("Crucible"); currencyOverviewResponse.has_value()) {
+        auto currencyOverview = currencyOverviewResponse.value(); 
+        auto predicate = [](const ninjapi::CurrencyOverviewResponse::Line& line) {
+            return line.currencyTypeName == "Divine Orb";
+        };
+        if (auto divineOrbEntry = std::find_if(currencyOverview.lines.begin(), currencyOverview.lines.end(), predicate); divineOrbEntry != currencyOverview.lines.end()) {
+            divineOrbChaosEquivalent = (*divineOrbEntry).chaosEquivalent;
+        }
+    }
+
+    aggr::updateCurrencyRatio("divine", divineOrbChaosEquivalent);
+
     Data data;
-    if (auto searchResponse = client.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
+    if (auto searchResponse = poeClient.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
         auto hashes = searchResponse.value();
-        if (auto fetchResponse = client.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
+        if (auto fetchResponse = poeClient.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
             auto items = fetchResponse.value();
             auto avgChaosPrice = aggr::averageChaosPrice(items);
             data.items.push_back( Data::Item { 

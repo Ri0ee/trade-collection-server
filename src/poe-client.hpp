@@ -43,7 +43,7 @@ struct PoEClient : httplib::SSLClient {
             throw std::runtime_error(fmt::format("POST response code is {}", res.status));
         }
 
-        return {};
+        return std::nullopt;
     }
 
     std::optional<poeapi::FetchResponse> fetch(const std::string& id, const std::vector<std::string>& hashes) {
