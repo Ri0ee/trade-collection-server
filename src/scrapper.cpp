@@ -26,6 +26,26 @@ int main() {
     searchRequest.query.stats.push_back({ .type = "and", .filters = {}});
     searchRequest.sort.price = "asc";
 
+    std::string league = "Crucible";
+    if (auto leaguesRes = poeClient.getAllLeagues(); leaguesRes.has_value()) {
+        auto leagues = leaguesRes.value();
+        auto it = std::remove_if(leagues.begin(), leagues.end(), [](const poeapi::League& league) {
+            if (!league.rules.has_value()) 
+                return false;
+            
+            auto rules = league.rules.value();
+            return std::any_of(rules.begin(), rules.end(), [](const poeapi::League::Rule& rule) {
+                return rule.id == "NoParties"; 
+            });
+        });
+
+        leagues.erase(it, leagues.end());
+
+        for (auto& league : leagues) {
+            std::cout << league.id << '\n';
+        }
+    }
+
     double divineOrbChaosEquivalent = 100; // default
     if (auto currencyOverviewResponse = ninjaClient.fetchCurrencyOverview("Crucible"); currencyOverviewResponse.has_value()) {
         auto currencyOverview = currencyOverviewResponse.value(); 

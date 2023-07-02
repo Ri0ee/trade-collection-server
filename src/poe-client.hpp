@@ -22,19 +22,19 @@ struct PoEClient : httplib::SSLClient {
         });
     }
 
-    std::optional<poeapi::LeaguesResponse> getAllLeagues() {
-        std::string url(poeapi::ep::leagues);
+    std::optional<std::vector<poeapi::League>> getAllLeagues() {
+        static std::string url(poeapi::ep::leagues);
         if (auto res = Get(url).value(); res.status == 200) {
-            return jsoncons::decode_json<poeapi::LeaguesResponse>(res.body);
+            return jsoncons::decode_json<std::vector<poeapi::League>>(res.body);
         }
         return std::nullopt;
     }
 
-    std::optional<poeapi::SearchResponse> search(const poeapi::SearchRequest& searchRequest) {
+    std::optional<poeapi::SearchResponse> search(const poeapi::SearchRequest& searchRequest, const std::string& league = "Standard") {
         std::string requestStr;
         jsoncons::encode_json(json { searchRequest }, requestStr);
 
-        std::string url = fmt::format(poeapi::ep::search, "Standard");
+        std::string url = fmt::format(poeapi::ep::search, league);
         if (auto res = Post(url, requestStr, "application/json").value(); res.status == 200) {
             searchRateLimit = {
                 .account = res.get_header_value("x-rate-limit-account"),
@@ -46,9 +46,6 @@ struct PoEClient : httplib::SSLClient {
             };
 
             return jsoncons::decode_json<poeapi::SearchResponse>(res.body);
-        }
-        else {
-            throw std::runtime_error(fmt::format("POST response code is {}", res.status));
         }
 
         return std::nullopt;
@@ -78,7 +75,7 @@ struct PoEClient : httplib::SSLClient {
                     .rules = res.get_header_value("x-rate-limit-rules")
                 };
 
-                std::cout << jsoncons::pretty_print(json::parse(res.body)) << '\n';
+                // std::cout << jsoncons::pretty_print(json::parse(res.body)) << '\n';
                 std::cout << fetchRateLimit.accountState << " " << fetchRateLimit.ipState << '\n';
 
                 auto tempFetchResponse = jsoncons::decode_json<poeapi::FetchResponse>(res.body);

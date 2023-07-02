@@ -21,17 +21,19 @@ namespace poeapi {
         constexpr std::string_view fetch { "/api/trade/fetch/{}?query={}" };
     }
 
-    struct LeaguesResponse {
-        struct League {
-            bool delveEvent;
-            std::string description;
+    struct League {
+        struct Rule {
             std::string id;
-            std::string realm;
-            std::string registerAt;
-            std::string startAt;
-            std::string url;
         };
-        std::vector<League> leagues;
+        std::optional<std::vector<Rule>> rules;
+        std::string description;
+        std::string id;
+
+        // std::string realm;
+        // std::string registerAt;
+        // std::string startAt;
+        // std::string url;
+        // std::optional<bool> delveEvent;
     };
 
     struct SearchRequest {
@@ -202,8 +204,8 @@ namespace poeapi {
     };
 }
 
-JSONCONS_N_MEMBER_TRAITS(poeapi::LeaguesResponse::League, 0, description, id, realm, registerAt, startAt, url);
-JSONCONS_N_MEMBER_TRAITS(poeapi::LeaguesResponse, 0, leagues);
+JSONCONS_N_MEMBER_TRAITS(poeapi::League::Rule, 0, id);
+JSONCONS_N_MEMBER_TRAITS(poeapi::League, 0, description, id, rules);
 
 JSONCONS_N_MEMBER_TRAITS(poeapi::SearchRequest::Query::Filters::TradeFilters::Filters::Price, 0, option, min, max)
 JSONCONS_N_MEMBER_TRAITS(poeapi::SearchRequest::Query::Filters::TradeFilters::Filters::Account, 0, input)
