@@ -23,7 +23,10 @@ struct PoEClient : httplib::SSLClient {
     }
 
     std::optional<poeapi::LeaguesResponse> getLeagues() {
-        
+        std::string url(poeapi::ep::leagues);
+        if (auto res = Get(url).value(); res.status == 200) {
+            return jsoncons::decode_json<poeapi::LeaguesResponse>(res.body);
+        }
         return std::nullopt;
     }
 
