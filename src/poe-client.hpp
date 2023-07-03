@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <sstream>
 #include <chrono>
 using namespace std::chrono;
 
@@ -55,7 +56,7 @@ struct PoEClient : httplib::SSLClient {
         poeapi::FetchResponse fetchResponse = {};
         auto iter = hashes.begin();
         constexpr uint64_t fetchBatchSize = 10;
-        for (int i = 0; i < hashes.size() / fetchBatchSize - 8; i++) {
+        for (int i = 0; i < hashes.size() / fetchBatchSize; i++) {
             std::string hashesCombined = std::accumulate(iter, std::min(iter + fetchBatchSize, hashes.end()), std::string(""), [](const auto& str1, const auto& str2) {
                 return (str1.empty() ? str2 : str1 + "," + str2);
             });
@@ -87,7 +88,10 @@ struct PoEClient : httplib::SSLClient {
                 fetchResponse.result.insert(fetchResponse.result.end(), tempFetchResponse.result.begin(), tempFetchResponse.result.end());
             }
 
-            std::this_thread::sleep_for(10s);
+            // sleep if there would be a next iteration
+            if (i + 1 < hashes.size() / fetchBatchSize) {
+                std::this_thread::sleep_for(fetchRateLimit.timeToWait());
+            }
         }
 
         return fetchResponse;
@@ -100,5 +104,41 @@ struct PoEClient : httplib::SSLClient {
         std::string ipState {};
         std::string policy {};
         std::string rules {};
+        milliseconds timeToWait() {
+            milliseconds result { 0 };
+            if (rules.find("Ip") != std::string::npos) {
+                std::stringstream stream(ip);
+
+                std::string rule;
+                while (std::getline(stream, rule, ',')) {
+                    int requests, time, penalty;
+                    char delim;
+                    std::stringstream ruleStream(rule);
+                    ruleStream >> requests >> delim >> time >> delim >> penalty;
+                    milliseconds minimalDelay { (time * 1000) / requests };
+                    if (result < minimalDelay) {
+                        result = minimalDelay;
+                    }
+                }
+            } 
+
+            if (rules.find("Account") != std::string::npos) {
+                std::stringstream stream(account);
+
+                std::string rule;
+                while (std::getline(stream, rule, ',')) {
+                    int requests, time, penalty;
+                    char delim;
+                    std::stringstream ruleStream(rule);
+                    ruleStream >> requests >> delim >> time >> delim >> penalty;
+                    milliseconds minimalDelay { (time * 1000) / requests };
+                    if (result < minimalDelay) {
+                        result = minimalDelay;
+                    }
+                }
+            }
+
+            return result;
+        }
     } searchRateLimit, fetchRateLimit;
 };
