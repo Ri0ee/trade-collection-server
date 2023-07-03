@@ -41,8 +41,9 @@ int main() {
 
         leagues.erase(it, leagues.end());
 
+        std::cout << "Current trade leagues:\n";
         for (auto& league : leagues) {
-            std::cout << league.id << '\n';
+            std::cout << '\t' << std::quoted(league.id) << '\n';
         }
     }
 

@@ -53,7 +53,7 @@ void Data::update() {
     
     auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     date = fmt::format("{:%Y-%m-%dT%H:%M:%SZ}\n", *std::gmtime(&t));
-    std::cout << date << '\n';
+    std::cout << "Local data updated at " << date << '\n';
 
     std::string dataStr;
     jsoncons::encode_json(*this, dataStr);

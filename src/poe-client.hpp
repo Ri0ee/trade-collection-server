@@ -62,7 +62,7 @@ struct PoEClient : httplib::SSLClient {
             iter += fetchBatchSize;
 
             std::string url = fmt::format(poeapi::ep::fetch, hashesCombined, id);
-            std::cout << fmt::format("Batch {} pending, URL: {}\n", i, url);
+            std::cout << fmt::format("Batch {} pending, URL: \"{}\"\n", i, url);
             if (auto res = Get(url).value(); res.status == 200) {
                 std::cout << fmt::format("Batch {} obtained\n", i);
 
@@ -75,8 +75,13 @@ struct PoEClient : httplib::SSLClient {
                     .rules = res.get_header_value("x-rate-limit-rules")
                 };
 
-                // std::cout << jsoncons::pretty_print(json::parse(res.body)) << '\n';
-                std::cout << fetchRateLimit.accountState << " " << fetchRateLimit.ipState << '\n';
+                if (fetchRateLimit.rules.find("Ip") != std::string::npos) {
+                    std::cout << "ip rate limit state: " << fetchRateLimit.ipState << '\n';
+                }
+                
+                if (fetchRateLimit.rules.find("Account") != std::string::npos) {
+                    std::cout << "account rate limit state: " << fetchRateLimit.accountState << '\n';
+                }
 
                 auto tempFetchResponse = jsoncons::decode_json<poeapi::FetchResponse>(res.body);
                 fetchResponse.result.insert(fetchResponse.result.end(), tempFetchResponse.result.begin(), tempFetchResponse.result.end());
