@@ -28,12 +28,12 @@ int main() {
 
     std::string league = "Standard"; // default
     if (auto leaguesRes = poeClient.getAllLeagues(); leaguesRes.has_value()) {
-        auto leagues = leaguesRes.value();
+        auto& leagues = leaguesRes.value();
         auto it = std::remove_if(leagues.begin(), leagues.end(), [](const poeapi::League& league) {
             if (!league.rules.has_value()) 
                 return false;
             
-            auto rules = league.rules.value();
+            const auto& rules = league.rules.value();
             return std::any_of(rules.begin(), rules.end(), [](const poeapi::League::Rule& rule) {
                 return rule.id == "NoParties"; 
             });
@@ -48,7 +48,7 @@ int main() {
 
     double divineOrbChaosEquivalent = 100; // default
     if (auto currencyOverviewResponse = ninjaClient.fetchCurrencyOverview(league); currencyOverviewResponse.has_value()) {
-        auto currencyOverview = currencyOverviewResponse.value(); 
+        auto& currencyOverview = currencyOverviewResponse.value(); 
         auto predicate = [](const ninjapi::CurrencyOverviewResponse::Line& line) {
             return line.currencyTypeName == "Divine Orb";
         };
@@ -61,9 +61,9 @@ int main() {
 
     Data data;
     if (auto searchResponse = poeClient.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
-        auto hashes = searchResponse.value();
+        auto& hashes = searchResponse.value();
         if (auto fetchResponse = poeClient.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
-            auto items = fetchResponse.value();
+            auto& items = fetchResponse.value();
             auto avgChaosPrice = aggr::averageChaosPrice(items);
             data.items.push_back( Data::Item { 
                 .metaName = "Awakened Added Chaos Damage Support - all", 
