@@ -26,7 +26,7 @@ int main() {
     searchRequest.query.stats.push_back({ .type = "and", .filters = {}});
     searchRequest.sort.price = "asc";
 
-    std::string league = "Crucible";
+    std::string league = "Standard"; // default
     if (auto leaguesRes = poeClient.getAllLeagues(); leaguesRes.has_value()) {
         auto leagues = leaguesRes.value();
         auto it = std::remove_if(leagues.begin(), leagues.end(), [](const poeapi::League& league) {
@@ -47,7 +47,7 @@ int main() {
     }
 
     double divineOrbChaosEquivalent = 100; // default
-    if (auto currencyOverviewResponse = ninjaClient.fetchCurrencyOverview("Crucible"); currencyOverviewResponse.has_value()) {
+    if (auto currencyOverviewResponse = ninjaClient.fetchCurrencyOverview(league); currencyOverviewResponse.has_value()) {
         auto currencyOverview = currencyOverviewResponse.value(); 
         auto predicate = [](const ninjapi::CurrencyOverviewResponse::Line& line) {
             return line.currencyTypeName == "Divine Orb";
