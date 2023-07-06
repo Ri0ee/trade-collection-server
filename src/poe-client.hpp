@@ -105,40 +105,34 @@ struct PoEClient : httplib::SSLClient {
         std::string policy {};
         std::string rules {};
         milliseconds timeToWait() {
-            milliseconds result { 0 };
+            milliseconds delay { 0 };
             if (rules.find("Ip") != std::string::npos) {
                 std::stringstream stream(ip);
-
                 std::string rule;
                 while (std::getline(stream, rule, ',')) {
                     int requests, time, penalty;
-                    char delim;
-                    std::stringstream ruleStream(rule);
-                    ruleStream >> requests >> delim >> time >> delim >> penalty;
-                    milliseconds minimalDelay { (time * 1000) / requests };
-                    if (result < minimalDelay) {
-                        result = minimalDelay;
-                    }
+                    parseRule(rule, requests, time, penalty); 
+                    delay = std::min(delay, milliseconds { (time * 1000) / requests });
                 }
             } 
 
             if (rules.find("Account") != std::string::npos) {
                 std::stringstream stream(account);
-
                 std::string rule;
                 while (std::getline(stream, rule, ',')) {
                     int requests, time, penalty;
-                    char delim;
-                    std::stringstream ruleStream(rule);
-                    ruleStream >> requests >> delim >> time >> delim >> penalty;
-                    milliseconds minimalDelay { (time * 1000) / requests };
-                    if (result < minimalDelay) {
-                        result = minimalDelay;
-                    }
+                    parseRule(rule, requests, time, penalty); 
+                    delay = std::min(delay, milliseconds { (time * 1000) / requests });
                 }
             }
 
-            return result;
+            return delay;
+        }
+
+        void parseRule(const std::string& rule, int& requests, int& time, int& penalty) {
+            char delim;
+            std::stringstream ruleStream(rule);
+            ruleStream >> requests >> delim >> time >> delim >> penalty;
         }
     } searchRateLimit, fetchRateLimit;
 };
