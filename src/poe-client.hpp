@@ -112,7 +112,7 @@ struct PoEClient : httplib::SSLClient {
                 while (std::getline(stream, rule, ',')) {
                     int requests, time, penalty;
                     parseRule(rule, requests, time, penalty); 
-                    delay = std::min(delay, milliseconds { (time * 1000) / requests });
+                    delay = std::max(delay, milliseconds { (time * 1000) / requests });
                 }
             } 
 
@@ -122,7 +122,7 @@ struct PoEClient : httplib::SSLClient {
                 while (std::getline(stream, rule, ',')) {
                     int requests, time, penalty;
                     parseRule(rule, requests, time, penalty); 
-                    delay = std::min(delay, milliseconds { (time * 1000) / requests });
+                    delay = std::max(delay, milliseconds { (time * 1000) / requests });
                 }
             }
 
