@@ -36,8 +36,10 @@ struct PoEClient : httplib::SSLClient {
         jsoncons::encode_json(json { searchRequest }, requestStr);
 
         std::string url = fmt::format(poeapi::ep::search, league);
+        std::this_thread::sleep_until(searchRateLimit.waitUntil());
         if (auto res = Post(url, requestStr, "application/json").value(); res.status == 200) {
             searchRateLimit = {
+                .responseTimepoint = steady_clock::now(),
                 .account = res.get_header_value("x-rate-limit-account"),
                 .accountState = res.get_header_value("x-rate-limit-account-state"),
                 .ip = res.get_header_value("x-rate-limit-ip"),
@@ -64,10 +66,13 @@ struct PoEClient : httplib::SSLClient {
 
             std::string url = fmt::format(poeapi::ep::fetch, hashesCombined, id);
             std::cout << fmt::format("Batch {} pending, URL: \"{}\"\n", i, url);
+
+            std::this_thread::sleep_until(fetchRateLimit.waitUntil());
             if (auto res = Get(url).value(); res.status == 200) {
                 std::cout << fmt::format("Batch {} obtained\n", i);
 
                 fetchRateLimit = {
+                    .responseTimepoint = steady_clock::now(),
                     .account = res.get_header_value("x-rate-limit-account"),
                     .accountState = res.get_header_value("x-rate-limit-account-state"),
                     .ip = res.get_header_value("x-rate-limit-ip"),
@@ -76,31 +81,23 @@ struct PoEClient : httplib::SSLClient {
                     .rules = res.get_header_value("x-rate-limit-rules")
                 };
 
-                if (fetchRateLimit.rules.find("Ip") != std::string::npos) {
-                    std::cout << "ip rate limit state: " << fetchRateLimit.ipState << '\n';
-                }
-                
-                if (fetchRateLimit.rules.find("Account") != std::string::npos) {
-                    std::cout << "account rate limit state: " << fetchRateLimit.accountState << '\n';
-                }
-
                 auto tempFetchResponse = jsoncons::decode_json<poeapi::FetchResponse>(res.body);
                 fetchResponse.result.insert(fetchResponse.result.end(), tempFetchResponse.result.begin(), tempFetchResponse.result.end());
             }
-
-            std::this_thread::sleep_for(fetchRateLimit.timeToWait());
         }
 
         return fetchResponse;
     }
 
     struct RateLimit {
+        steady_clock::time_point responseTimepoint {};
         std::string account {};
         std::string accountState {};
         std::string ip {};
         std::string ipState {};
         std::string policy {};
         std::string rules {};
+
         milliseconds timeToWait() {
             milliseconds delay { 0 };
             if (rules.find("Ip") != std::string::npos) {
@@ -124,6 +121,10 @@ struct PoEClient : httplib::SSLClient {
             }
 
             return delay;
+        }
+
+        steady_clock::time_point waitUntil() {
+            return responseTimepoint + timeToWait();
         }
 
         void parseRule(const std::string& rule, int& requests, int& time, int& penalty) {
