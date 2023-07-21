@@ -15,20 +15,20 @@ void Data::read() {
     if (!versionFile.good())
         throw std::runtime_error("Unable to read version file");
 
-    std::stringstream fileVersionBuffer;
-    fileVersionBuffer << versionFile.rdbuf();
+    std::string localVersion;
+    versionFile >> localVersion;
 
-    if (version == fileVersionBuffer.str()) {
-        throw std::runtime_error("No new data available");
-    }
+    if (version == localVersion)
+        return;
 
     std::ifstream dataFile(currentPath / "data.json");
     if (!dataFile.good())
         throw std::runtime_error("Unable to read data file");
     
-    *this = jsoncons::decode_json<Data>(dataFile);
-
-    version = fileVersionBuffer.str();
+    auto data = jsoncons::decode_json<Data>(dataFile);
+    items = data.items;
+    date = data.date;
+    version = localVersion;
 }
 
 std::string Data::serve() const {
@@ -67,13 +67,15 @@ void Data::restore() {
     if (!std::filesystem::exists(currentPath / "version") || !std::filesystem::exists(currentPath / "data.json"))
         return;
 
-    std::ifstream dataFile(currentPath / "data.json");
-    if (!dataFile.good())
-        return;
-    *this = jsoncons::decode_json<Data>(dataFile);
-
     std::ifstream versionFile(currentPath / "version");
     if (!versionFile.good())
         return;
     versionFile >> version;
+
+    std::ifstream dataFile(currentPath / "data.json");
+    if (!dataFile.good())
+        return;
+    auto data = jsoncons::decode_json<Data>(dataFile);
+    items = data.items;
+    date = data.date;
 }

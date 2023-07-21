@@ -84,7 +84,12 @@ int main() {
                 });
             }
         }
-        data.update();
+
+        try {
+            data.update();
+        } catch (const std::exception& e) {
+            std::cerr << e.what() << '\n';
+        }
     }
 
     return 0;
