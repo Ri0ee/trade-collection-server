@@ -8,6 +8,15 @@
 #include "ninja-client.hpp"
 #include "aggregator.hpp"
 
+std::string translateCurrencyTypeName(const std::string& currencyTypeName) {
+    // Transform poeninja currency type name to the one used in fetch api 
+    if (currencyTypeName == "Divine Orb") return "divine";
+    if (currencyTypeName == "Mirror of Kalandra") return "mirror";
+    if (currencyTypeName == "Exalted Orb") return "exalted";
+    // TODO: add more translations when needed
+    return currencyTypeName;
+}
+
 int main() {
     std::filesystem::path currentPath = std::filesystem::current_path();
     std::ifstream tokenFile(currentPath / "poetoken");
@@ -54,18 +63,12 @@ int main() {
         }
     }
 
-    double divineOrbChaosEquivalent = 100; // default
     if (auto currencyOverviewResponse = ninjaClient.fetchCurrencyOverview(league); currencyOverviewResponse.has_value()) {
         auto& currencyOverview = currencyOverviewResponse.value(); 
-        auto predicate = [](const ninjapi::CurrencyOverviewResponse::Line& line) {
-            return line.currencyTypeName == "Divine Orb";
-        };
-        if (auto divineOrbEntry = std::find_if(currencyOverview.lines.begin(), currencyOverview.lines.end(), predicate); divineOrbEntry != currencyOverview.lines.end()) {
-            divineOrbChaosEquivalent = (*divineOrbEntry).chaosEquivalent;
+        for (const auto& line : currencyOverview.lines) {
+            aggr::updateCurrencyRatio(translateCurrencyTypeName(line.currencyTypeName), line.chaosEquivalent);
         }
     }
-
-    aggr::updateCurrencyRatio("divine", divineOrbChaosEquivalent);
 
     Data data;
     for (auto const& [metaName, searchRequest] : searchRequests) {
