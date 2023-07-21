@@ -52,7 +52,7 @@ void Data::update() {
         throw std::runtime_error("Unable to write data file");
     
     auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    date = fmt::format("{:%Y-%m-%dT%H:%M:%SZ}\n", *std::gmtime(&t));
+    date = fmt::format("{:%Y-%m-%dT%H:%M:%SZ}", *std::gmtime(&t));
     std::cout << "Local data updated at " << date << '\n';
 
     std::string dataStr;
@@ -67,13 +67,13 @@ void Data::restore() {
     if (!std::filesystem::exists(currentPath / "version") || !std::filesystem::exists(currentPath / "data.json"))
         return;
 
-    std::ifstream versionFile(currentPath / "version");
-    if (!versionFile.good())
-        return;
-    versionFile >> version;
-
     std::ifstream dataFile(currentPath / "data.json");
     if (!dataFile.good())
         return;
     *this = jsoncons::decode_json<Data>(dataFile);
+
+    std::ifstream versionFile(currentPath / "version");
+    if (!versionFile.good())
+        return;
+    versionFile >> version;
 }

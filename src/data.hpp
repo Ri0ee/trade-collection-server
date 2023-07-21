@@ -21,4 +21,4 @@ struct Data {
 };
 
 JSONCONS_N_MEMBER_TRAITS(Data::Item, 0, averageCostChaos, averageCostDivine)
-JSONCONS_N_MEMBER_TRAITS(Data, 0, version, date, items)
+JSONCONS_N_MEMBER_TRAITS(Data, 0, date, items)
