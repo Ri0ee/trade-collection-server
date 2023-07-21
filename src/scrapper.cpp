@@ -20,11 +20,18 @@ int main() {
     PoEClient poeClient("www.pathofexile.com", poeToken);
     NinjaClient ninjaClient("poe.ninja");
 
-    poeapi::SearchRequest searchRequest {};
-    searchRequest.query.type = "Awakened Added Chaos Damage Support";
-    searchRequest.query.status.option = "online";
-    searchRequest.query.stats.push_back({ .type = "and", .filters = {}});
-    searchRequest.sort.price = "asc";
+    std::map<std::string, poeapi::SearchRequest> searchRequests;
+    try { 
+        std::ifstream searchRequestsFile(currentPath / "requests.json");
+        searchRequests = jsoncons::decode_json<std::map<std::string, poeapi::SearchRequest>>(searchRequestsFile);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << '\n';
+    }
+
+    if (searchRequests.empty()) {
+        std::cout << "No request collection provided\n";
+        return 0;
+    }
 
     std::string league = "Standard"; // default
     if (auto leaguesRes = poeClient.getAllLeagues(); leaguesRes.has_value()) {
@@ -61,24 +68,21 @@ int main() {
     aggr::updateCurrencyRatio("divine", divineOrbChaosEquivalent);
 
     Data data;
-    if (auto searchResponse = poeClient.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
-        auto& hashes = searchResponse.value();
-        if (auto fetchResponse = poeClient.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
-            auto& items = fetchResponse.value();
-            auto avgChaosPrice = aggr::averageChaosPrice(items);
-            data.items.push_back( Data::Item { 
-                .metaName = "Awakened Added Chaos Damage Support - all", 
-                .averageCostChaos = avgChaosPrice, 
-                .averageCostDivine = avgChaosPrice / aggr::currencyToChaosRatios["divine"] 
-            });
-        } else {
-            throw std::runtime_error("Fetch returned no value");
+    for (auto& [metaName, searchRequest] : searchRequests) {
+        if (auto searchResponse = poeClient.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
+            auto& hashes = searchResponse.value();
+            if (auto fetchResponse = poeClient.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
+                auto& items = fetchResponse.value();
+                auto avgChaosPrice = aggr::averageChaosPrice(items);
+                data.items.push_back( Data::Item { 
+                    .metaName = metaName, 
+                    .averageCostChaos = avgChaosPrice, 
+                    .averageCostDivine = avgChaosPrice / aggr::currencyToChaosRatios["divine"] 
+                });
+            }
         }
-    } else {
-        throw std::runtime_error("Search returned no value");
+        data.update();
     }
 
-    data.update();
-    
     return 0;
 }
