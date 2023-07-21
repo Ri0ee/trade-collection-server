@@ -7,18 +7,18 @@ using json = jsoncons::json;
 struct Data {
     void read();
     void update();
+    void restore();
     std::string serve() const;
 
     std::string version = "0";
     std::string date = "";
 
     struct Item {
-        std::string metaName;
         double averageCostChaos;
         double averageCostDivine;
     };
-    std::vector<Item> items;
+    std::map<std::string, Item> items;
 };
 
-JSONCONS_N_MEMBER_TRAITS(Data::Item, 0, metaName, averageCostChaos, averageCostDivine)
+JSONCONS_N_MEMBER_TRAITS(Data::Item, 0, averageCostChaos, averageCostDivine)
 JSONCONS_N_MEMBER_TRAITS(Data, 0, version, date, items)

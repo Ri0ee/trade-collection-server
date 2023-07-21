@@ -71,14 +71,14 @@ int main() {
     }
 
     Data data;
+    data.restore();
     for (auto const& [metaName, searchRequest] : searchRequests) {
         if (auto searchResponse = poeClient.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
             auto& hashes = searchResponse.value();
             if (auto fetchResponse = poeClient.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
                 auto& items = fetchResponse.value();
                 auto avgChaosPrice = aggr::averageChaosPrice(items);
-                data.items.push_back( Data::Item { 
-                    .metaName = metaName, 
+                data.items.insert_or_assign(metaName, Data::Item { 
                     .averageCostChaos = avgChaosPrice, 
                     .averageCostDivine = avgChaosPrice / aggr::currencyToChaosRatios["divine"] 
                 });

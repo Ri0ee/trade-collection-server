@@ -22,7 +22,7 @@ void Data::read() {
         throw std::runtime_error("No new data available");
     }
 
-    std::ifstream dataFile(currentPath / "data");
+    std::ifstream dataFile(currentPath / "data.json");
     if (!dataFile.good())
         throw std::runtime_error("Unable to read data file");
     
@@ -47,7 +47,7 @@ void Data::update() {
     version = std::to_string(std::stoi(version) + 1);
     versionFile << version;
 
-    std::ofstream dataFile(currentPath / "data");
+    std::ofstream dataFile(currentPath / "data.json");
     if (!dataFile.good())
         throw std::runtime_error("Unable to write data file");
     
@@ -59,4 +59,21 @@ void Data::update() {
     jsoncons::encode_json(*this, dataStr);
 
     dataFile << dataStr;
+}
+
+void Data::restore() {
+    std::filesystem::path currentPath { std::filesystem::current_path() };
+
+    if (!std::filesystem::exists(currentPath / "version") || !std::filesystem::exists(currentPath / "data.json"))
+        return;
+
+    std::ifstream versionFile(currentPath / "version");
+    if (!versionFile.good())
+        return;
+    versionFile >> version;
+
+    std::ifstream dataFile(currentPath / "data.json");
+    if (!dataFile.good())
+        return;
+    *this = jsoncons::decode_json<Data>(dataFile);
 }
