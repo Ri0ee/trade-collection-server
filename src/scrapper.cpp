@@ -68,7 +68,7 @@ int main() {
     aggr::updateCurrencyRatio("divine", divineOrbChaosEquivalent);
 
     Data data;
-    for (auto& [metaName, searchRequest] : searchRequests) {
+    for (auto const& [metaName, searchRequest] : searchRequests) {
         if (auto searchResponse = poeClient.search(searchRequest); searchResponse.has_value() && !searchResponse.value().result.empty()) {
             auto& hashes = searchResponse.value();
             if (auto fetchResponse = poeClient.fetch(hashes.id, hashes.result); fetchResponse.has_value()) {
