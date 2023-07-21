@@ -88,10 +88,7 @@ struct PoEClient : httplib::SSLClient {
                 fetchResponse.result.insert(fetchResponse.result.end(), tempFetchResponse.result.begin(), tempFetchResponse.result.end());
             }
 
-            // sleep if there would be a next iteration
-            if (i + 1 < hashes.size() / fetchBatchSize) {
-                std::this_thread::sleep_for(fetchRateLimit.timeToWait());
-            }
+            std::this_thread::sleep_for(fetchRateLimit.timeToWait());
         }
 
         return fetchResponse;
