@@ -65,11 +65,11 @@ struct PoEClient : httplib::SSLClient {
             iter += fetchBatchSize;
 
             std::string url = fmt::format(poeapi::ep::fetch, hashesCombined, id);
-            std::cout << fmt::format("Batch {} pending, URL: \"{}\"\n", i, url);
+            std::cout << fmt::format("Batch {} pending, URL: \"{}\"", i, url);
 
             std::this_thread::sleep_until(fetchRateLimit.waitUntil());
             if (auto res = Get(url).value(); res.status == 200) {
-                std::cout << fmt::format("Batch {} obtained\n", i);
+                std::cout << fmt::format("\tBatch {} obtained\n", i);
 
                 fetchRateLimit = {
                     .responseTimepoint = steady_clock::now(),
